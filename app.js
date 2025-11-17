@@ -8,6 +8,7 @@ let alarmTimeout = null;
 let compressor = null;
 let pusher = null;
 let channel = null;
+let clientId = Math.random().toString(36).substr(2, 9);
 
 // Inicializar Pusher
 function initPusher() {
@@ -21,18 +22,18 @@ function initPusher() {
 
   channel = pusher.subscribe('alarm-channel');
 
-  channel.bind('alarm-start', function() {
-    console.log('[v0] Alarma iniciada desde otro usuario');
-    if (!isAlarmActive) {
+  channel.bind('client-alarm-start', function(data) {
+    console.log('[v0] Alarma iniciada desde otro usuario:', data.clientId);
+    if (!isAlarmActive && data.clientId !== clientId) {
       isAlarmActive = true;
       playAlarmSound();
       updateUI();
     }
   });
 
-  channel.bind('alarm-stop', function() {
-    console.log('[v0] Alarma detenida desde otro usuario');
-    if (isAlarmActive) {
+  channel.bind('client-alarm-stop', function(data) {
+    console.log('[v0] Alarma detenida desde otro usuario:', data.clientId);
+    if (isAlarmActive && data.clientId !== clientId) {
       stopAlarmSound();
       isAlarmActive = false;
       updateUI();
@@ -149,6 +150,7 @@ async function startAlarm() {
 
   if (channel) {
     channel.trigger('client-alarm-start', {
+      clientId: clientId,
       timestamp: new Date().toISOString()
     });
   }
@@ -164,6 +166,7 @@ async function stopAlarm() {
 
   if (channel) {
     channel.trigger('client-alarm-stop', {
+      clientId: clientId,
       timestamp: new Date().toISOString()
     });
   }
