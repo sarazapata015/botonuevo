@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Alarma Compartida</title>
+<style>
+  body { font-family: Arial; text-align: center; margin-top: 50px; }
+  #popup { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center; }
+  #popupContent { background:white; padding:20px; border-radius:10px; text-align:center; }
+  button { padding:15px; font-size:18px; cursor:pointer; }
+</style>
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+</head>
+<body>
+
+<h2>🚨 Alarma Global</h2>
+<button onclick="sendAlarm()">Enviar alarma</button>
+
+<div id="popup">
+  <div id="popupContent">
+    <h3>🔥 Alarma activada</h3>
+    <button onclick="stopAlarm()">Detener alarma</button>
+  </div>
+</div>
+
+<audio id="alarmSound">
+  <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg">
+</audio>
+
+<script>
+  // Aquí ponemos los datos irreales de ejemplo
+  const pusher = new Pusher("9d107dfd6c6872f19922", { cluster: "mt1" });
+  const channel = pusher.subscribe("alarma-global");
+
+  const alarma = document.getElementById("alarmSound");
+  const popup = document.getElementById("popup");
+
+  channel.bind("alarma-activada", () => {
+    alarma.loop = true;
+    alarma.play();
+    popup.style.display = "flex";
+  });
+
+  channel.bind("alarma-detener", () => {
+    alarma.pause();
+    alarma.currentTime = 0;
+    popup.style.display = "none";
+  });
+
+  function sendAlarm() { fetch("/api/trigger", { method: "POST" }); }
+  function stopAlarm() { fetch("/api/stop", { method: "POST" }); }
+</script>
+
+</body>
+</html>
