@@ -22,21 +22,29 @@ function initPusher() {
 
   channel = pusher.subscribe('alarm-channel');
 
-  channel.bind('client-alarm-start', function(data) {
-    console.log('[v0] Alarma iniciada desde otro usuario:', data.clientId);
-    if (!isAlarmActive && data.clientId !== clientId) {
-      isAlarmActive = true;
-      playAlarmSound();
-      updateUI();
+  channel.bind('alarm-event', function(data) {
+    console.log('[v0] Evento de alarma recibido:', data);
+    
+    // Solo procesar si viene de otro cliente
+    if (data.clientId === clientId) {
+      console.log('[v0] Ignorando evento propio');
+      return;
     }
-  });
 
-  channel.bind('client-alarm-stop', function(data) {
-    console.log('[v0] Alarma detenida desde otro usuario:', data.clientId);
-    if (isAlarmActive && data.clientId !== clientId) {
-      stopAlarmSound();
-      isAlarmActive = false;
-      updateUI();
+    if (data.action === 'start') {
+      console.log('[v0] Alarma iniciada desde:', data.clientId);
+      if (!isAlarmActive) {
+        isAlarmActive = true;
+        playAlarmSound();
+        updateUI();
+      }
+    } else if (data.action === 'stop') {
+      console.log('[v0] Alarma detenida desde:', data.clientId);
+      if (isAlarmActive) {
+        stopAlarmSound();
+        isAlarmActive = false;
+        updateUI();
+      }
     }
   });
 
@@ -148,11 +156,16 @@ async function startAlarm() {
   playAlarmSound();
   updateUI();
 
-  if (channel) {
-    channel.trigger('client-alarm-start', {
-      clientId: clientId,
-      timestamp: new Date().toISOString()
-    });
+  if (isConnected) {
+    try {
+      await fetch('/api/trigger-alarm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start', clientId: clientId })
+      });
+    } catch (error) {
+      console.error('[v0] Error al enviar alarma:', error);
+    }
   }
 }
 
@@ -164,11 +177,16 @@ async function stopAlarm() {
   stopAlarmSound();
   updateUI();
 
-  if (channel) {
-    channel.trigger('client-alarm-stop', {
-      clientId: clientId,
-      timestamp: new Date().toISOString()
-    });
+  if (isConnected) {
+    try {
+      await fetch('/api/trigger-alarm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'stop', clientId: clientId })
+      });
+    } catch (error) {
+      console.error('[v0] Error al detener alarma:', error);
+    }
   }
 }
 
