@@ -1,12 +1,13 @@
 {
-  "name": "botonuevo",
+  "name": "botonuevo2",
   "version": "1.0.0",
   "description": "Alarma compartida con Pusher",
   "main": "index.js",
   "scripts": {},
-  "author": "Laura",
+  "author": "Sara",
   "license": "MIT",
   "dependencies": {
-    "pusher": "^7.0.0"
+  "pusher": "5.2.0"
+
   }
 }
