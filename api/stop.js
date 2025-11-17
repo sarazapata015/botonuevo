@@ -1,4 +1,5 @@
-import Pusher from "pusher";
+// stop.js
+import Pusher from "https://cdn.jsdelivr.net/npm/pusher@5.2.0/dist/web/pusher.mjs";
 
 const pusher = new Pusher({
   appId: process.env.PUSHER_APP_ID,
@@ -9,6 +10,11 @@ const pusher = new Pusher({
 });
 
 export default async function handler(req, res) {
-  await pusher.trigger("alarma-global", "alarma-detener", {});
-  res.status(200).json({ ok: true });
+  try {
+    await pusher.trigger("alarma-global", "alarma-detener", {});
+    res.status(200).json({ ok: true, message: "Alarma detenida" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ ok: false, error: "Error al detener alarma" });
+  }
 }
