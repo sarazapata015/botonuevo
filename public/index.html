@@ -28,13 +28,14 @@
 </audio>
 
 <script>
-  // Aquí ponemos los datos irreales de ejemplo
-  const pusher = new Pusher("9d107dfd6c6872f19922", { cluster: "mt1" });
+  // Configuración de Pusher (usa tus claves reales)
+  const pusher = new Pusher("TU_PUSHER_KEY", { cluster: "TU_CLUSTER" });
   const channel = pusher.subscribe("alarma-global");
 
   const alarma = document.getElementById("alarmSound");
   const popup = document.getElementById("popup");
 
+  // Escucha eventos desde Pusher
   channel.bind("alarma-activada", () => {
     alarma.loop = true;
     alarma.play();
@@ -47,8 +48,37 @@
     popup.style.display = "none";
   });
 
-  function sendAlarm() { fetch("/api/trigger", { method: "POST" }); }
-  function stopAlarm() { fetch("/api/stop", { method: "POST" }); }
+  // Función para activar alarma (cliente)
+  function sendAlarm() {
+    fetch(`https://api.pusherapp.com/apps/TU_PUSHER_APP_ID/events`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer TU_PUSHER_KEY" // O tu auth token si es necesario
+      },
+      body: JSON.stringify({
+        name: "alarma-activada",
+        channels: ["alarma-global"],
+        data: "{}"
+      })
+    }).catch(e => console.error("No se pudo enviar la alarma:", e));
+  }
+
+  // Función para detener alarma (cliente)
+  function stopAlarm() {
+    fetch(`https://api.pusherapp.com/apps/TU_PUSHER_APP_ID/events`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer TU_PUSHER_KEY"
+      },
+      body: JSON.stringify({
+        name: "alarma-detener",
+        channels: ["alarma-global"],
+        data: "{}"
+      })
+    }).catch(e => console.error("No se pudo detener la alarma:", e));
+  }
 </script>
 
 </body>
