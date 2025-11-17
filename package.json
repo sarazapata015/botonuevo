@@ -1,0 +1,12 @@
+{
+  "name": "botonuevo",
+  "version": "1.0.0",
+  "description": "Alarma compartida con Pusher",
+  "main": "index.js",
+  "scripts": {},
+  "author": "Laura",
+  "license": "MIT",
+  "dependencies": {
+    "pusher": "^7.0.0"
+  }
+}
