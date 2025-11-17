@@ -17,10 +17,34 @@ function initPusher() {
   pusher = new Pusher('9d107dfd6c6872f19922', {
     cluster: 'mt1',
     forceTLS: true,
-    enabledTransports: ['ws', 'wss']
+    enabledTransports: ['ws', 'wss'],
+    auth: {
+      key: '9d107dfd6c6872f19922'
+    },
+    authorizer: function(channel) {
+      return {
+        authorize: function(socket_id, callback) {
+          fetch('/api/trigger-alarm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              socket_id: socket_id, 
+              channel_name: channel.name 
+            })
+          })
+          .then(response => response.json())
+          .then(data => {
+            callback(false, data);
+          })
+          .catch(error => {
+            callback(true, error);
+          });
+        }
+      };
+    }
   });
 
-  channel = pusher.subscribe('alarm-channel');
+  channel = pusher.subscribe('private-alarm-channel');
 
   channel.bind('alarm-event', function(data) {
     console.log('[v0] Evento de alarma recibido:', data);

@@ -8,11 +8,22 @@ export default async function handler(req, res) {
     cluster: "mt1"
   });
 
-  if (req.method === 'POST') {
+  if (req.method === 'POST' && req.url.includes('/auth')) {
+    const { socket_id, channel_name } = req.body;
+    
+    try {
+      const auth = pusher.authorizeChannel(socket_id, channel_name);
+      res.status(200).json(auth);
+    } catch (error) {
+      console.error('[v0] Auth error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+  else if (req.method === 'POST') {
     const { action, clientId } = req.body;
 
     try {
-      await pusher.trigger('alarm-channel', 'alarm-event', {
+      await pusher.trigger('private-alarm-channel', 'alarm-event', {
         action: action,
         clientId: clientId,
         timestamp: new Date().toISOString()
