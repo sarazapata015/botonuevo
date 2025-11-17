@@ -1,472 +1,200 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alarma Compartida en Tiempo Real</title>
-    <script src="https://js.pusher.com/8.0.2/pusher.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alarma Compartida</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            padding: 20px;
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(to bottom right, #1a1a2e, #16213e);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
 
-        .container {
-            text-align: center;
-            background: #0f3460;
-            padding: 60px 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            max-width: 500px;
-            width: 100%;
-            border: 2px solid #533483;
-        }
+    .container {
+      width: 100%;
+      max-width: 400px;
+      background: #0f3460;
+      padding: 48px;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      border: 2px solid #533483;
+      text-align: center;
+    }
 
-        h1 {
-            color: #e94560;
-            margin-bottom: 20px;
-            font-size: 32px;
-            font-weight: 700;
-        }
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #e94560;
+      margin-bottom: 24px;
+    }
 
-        .user-info {
-            background: rgba(233, 69, 96, 0.1);
-            padding: 15px 20px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            font-size: 14px;
-            color: #a8dadc;
-            border: 1px solid rgba(233, 69, 96, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
+    .status {
+      background: rgba(233, 69, 96, 0.1);
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 32px;
+      border: 1px solid rgba(233, 69, 96, 0.3);
+    }
 
-        .user-info .status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
+    .status-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
 
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            background: #4CAF50;
-            border-radius: 50%;
-            animation: pulse-dot 2s infinite;
-        }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #e74c3c;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
 
-        @keyframes pulse-dot {
-            0%, 100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.6;
-                transform: scale(1.2);
-            }
-        }
+    .status-dot.connected {
+      background: #27ae60;
+    }
 
-        .button-container {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
 
-        button {
-            padding: 15px 40px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+    .status-text {
+      font-size: 14px;
+      color: #a8dadc;
+    }
 
-        .start-btn {
-            background: linear-gradient(135deg, #e94560 0%, #f72585 100%);
-            color: white;
-            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.3);
-        }
+    .user-count {
+      font-size: 14px;
+      color: #a8dadc;
+    }
 
-        .start-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 30px rgba(233, 69, 96, 0.5);
-        }
+    button {
+      width: 100%;
+      padding: 16px 40px;
+      background: linear-gradient(to right, #e94560, #f72585);
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
 
-        .start-btn:active {
-            transform: translateY(-1px);
-        }
+    button:hover:not(:disabled) {
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+      transform: translateY(-2px);
+    }
 
-        .alarm-indicator {
-            display: none;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(233, 69, 96, 0.2);
-            border-left: 4px solid #e94560;
-            color: #ff6b9d;
-            font-weight: bold;
-            border-radius: 6px;
-            animation: blink 1s infinite;
-        }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
-        .alarm-indicator.active {
-            display: block;
-        }
+    .alarm-active {
+      margin-top: 24px;
+      padding: 12px;
+      background: rgba(233, 69, 96, 0.2);
+      border-left: 4px solid #e94560;
+      color: #ff6b9d;
+      font-weight: 700;
+      border-radius: 4px;
+      animation: pulse 1s ease-in-out infinite;
+    }
 
-        @keyframes blink {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
-        }
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
 
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            animation: fadeIn 0.3s ease;
-            backdrop-filter: blur(4px);
-        }
+    .modal.active {
+      display: flex;
+    }
 
-        .modal.show {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    .modal-content {
+      background: linear-gradient(to bottom right, #0f3460, #16213e);
+      padding: 48px;
+      border-radius: 16px;
+      text-align: center;
+      max-width: 320px;
+      border: 2px solid #e94560;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
+    .modal-content h2 {
+      font-size: 48px;
+      font-weight: 700;
+      color: #ff6b9d;
+      margin-bottom: 24px;
+      animation: pulse 1s ease-in-out infinite;
+    }
 
-        .modal-content {
-            background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
-            padding: 50px 40px;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(233, 69, 96, 0.4);
-            animation: slideIn 0.3s ease;
-            max-width: 400px;
-            width: 90%;
-            border: 2px solid #e94560;
-        }
+    .modal-content p {
+      color: #a8dadc;
+      margin-bottom: 32px;
+      font-size: 16px;
+    }
 
-        @keyframes slideIn {
-            from {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .modal-content h2 {
-            color: #ff6b9d;
-            margin-bottom: 20px;
-            font-size: 36px;
-            animation: pulse 1s infinite;
-            text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.15);
-            }
-        }
-
-        .modal-content p {
-            color: #a8dadc;
-            margin-bottom: 30px;
-        }
-
-        .stop-btn {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            color: white;
-            padding: 15px 60px;
-            font-size: 18px;
-            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.3);
-        }
-
-        .stop-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 30px rgba(76, 175, 80, 0.5);
-        }
-
-        .stop-btn:active {
-            transform: translateY(-1px);
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 40px 30px;
-            }
-
-            h1 {
-                font-size: 24px;
-            }
-
-            button {
-                padding: 12px 30px;
-                font-size: 14px;
-            }
-
-            .modal-content h2 {
-                font-size: 28px;
-            }
-
-            .modal-content {
-                padding: 40px 30px;
-            }
-        }
-    </style>
+    .modal-content button {
+      background: linear-gradient(to right, #27ae60, #16a085);
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Alarma Compartida</h1>
-        <div class="user-info">
-            <div class="status-indicator">
-                <span class="status-dot"></span>
-                <span id="statusText">Conectando...</span>
-            </div>
-            <span>•</span>
-            <span id="userCount">0</span> usuario(s)
-        </div>
-        <div class="button-container">
-            <button class="start-btn" onclick="startAlarm()">Iniciar Alarma</button>
-        </div>
-        <div class="alarm-indicator" id="indicator">ALARMA ACTIVA</div>
+  <div class="container">
+    <h1>Alarma Compartida</h1>
+
+    <div class="status">
+      <div class="status-line">
+        <div class="status-dot" id="statusDot"></div>
+        <span class="status-text" id="statusText">Desconectado</span>
+      </div>
+      <div class="user-count" id="userCount">0 usuario(s) conectado(s)</div>
     </div>
 
-    <div class="modal" id="alarmModal">
-        <div class="modal-content">
-            <h2>ALARMA</h2>
-            <p>Presiona el botón para detener</p>
-            <button class="stop-btn" onclick="stopAlarm()">Detener Alarma</button>
-        </div>
+    <button id="startBtn" onclick="startAlarm()">Iniciar Alarma</button>
+
+    <div class="alarm-active" id="alarmActive" style="display: none;">
+      ALARMA ACTIVA
     </div>
+  </div>
 
-    <script>
-        let audioContext;
-        let oscillator;
-        let gainNode;
-        let isAlarmActive = false;
-        let alarmTimeout;
-        let compressor;
-        let userCount = 0;
-        let pusher;
-        let channel;
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h2>ALARMA</h2>
+      <p>Presiona el botón para detener</p>
+      <button onclick="stopAlarm()">Detener Alarma</button>
+    </div>
+  </div>
 
-        function initPusher() {
-            console.log('[v0] Inicializando Pusher');
-            
-            pusher = new Pusher('9d107dfd6c6872f19922', {
-                cluster: 'mt1',
-                forceTLS: true,
-                enabledTransports: ['ws', 'wss']
-            });
-
-            channel = pusher.subscribe('alarm-channel');
-
-            channel.bind('alarm-start', function(data) {
-                console.log('[v0] Alarma iniciada desde otro usuario');
-                if (!isAlarmActive) {
-                    triggerAlarmFromRemote();
-                }
-            });
-
-            channel.bind('alarm-stop', function(data) {
-                console.log('[v0] Alarma detenida desde otro usuario');
-                if (isAlarmActive) {
-                    stopAlarmFromRemote();
-                }
-            });
-
-            pusher.connection.bind('connected', function() {
-                console.log('[v0] Conectado a Pusher');
-                document.getElementById('statusText').textContent = 'Conectado';
-                updateUserCount();
-            });
-
-            pusher.connection.bind('disconnected', function() {
-                console.log('[v0] Desconectado de Pusher');
-                document.getElementById('statusText').textContent = 'Desconectado';
-            });
-        }
-
-        function updateUserCount() {
-            const subscribers = channel.members.count;
-            userCount = subscribers;
-            document.getElementById('userCount').textContent = subscribers;
-            console.log('[v0] Usuarios conectados:', subscribers);
-        }
-
-        function startAlarm() {
-            if (isAlarmActive) return;
-            
-            console.log('[v0] Iniciando alarma y enviando a todos los usuarios');
-            isAlarmActive = true;
-            
-            document.getElementById('alarmModal').classList.add('show');
-            document.getElementById('indicator').classList.add('active');
-            
-            // Trigger sound locally
-            playAlarmSound();
-            
-            // Send event to all users via Pusher
-            fetch('/api/trigger-alarm', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ action: 'start' })
-            }).catch(err => console.error('[v0] Error enviando evento:', err));
-        }
-
-        function playAlarmSound() {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            
-            if (!compressor) {
-                compressor = audioContext.createDynamicsCompressor();
-                compressor.threshold.value = -50;
-                compressor.knee.value = 40;
-                compressor.ratio.value = 12;
-                compressor.attack.value = 0.003;
-                compressor.release.value = 0.25;
-                compressor.connect(audioContext.destination);
-            }
-            
-            oscillator = audioContext.createOscillator();
-            gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(compressor);
-            
-            oscillator.frequency.setValueAtTime(700, audioContext.currentTime);
-            oscillator.type = 'sawtooth';
-            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-            
-            oscillator.start();
-            setAlarmPattern();
-        }
-
-        function setAlarmPattern() {
-            if (!isAlarmActive) return;
-            
-            const now = audioContext.currentTime;
-            
-            oscillator.frequency.setValueAtTime(700, now);
-            oscillator.frequency.exponentialRampToValueAtTime(900, now + 0.15);
-            oscillator.frequency.exponentialRampToValueAtTime(700, now + 0.3);
-            
-            gainNode.gain.setValueAtTime(0.2, now);
-            gainNode.gain.exponentialRampToValueAtTime(0.1, now + 0.15);
-            
-            alarmTimeout = setTimeout(setAlarmPattern, 300);
-        }
-
-        function stopAlarm() {
-            if (!isAlarmActive) return;
-            
-            console.log('[v0] Deteniendo alarma');
-            isAlarmActive = false;
-            
-            if (oscillator) {
-                oscillator.stop();
-                oscillator.disconnect();
-                oscillator = null;
-            }
-            
-            if (alarmTimeout) {
-                clearTimeout(alarmTimeout);
-            }
-            
-            document.getElementById('alarmModal').classList.remove('show');
-            document.getElementById('indicator').classList.remove('active');
-            
-            // Send stop event to all users via Pusher
-            fetch('/api/trigger-alarm', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ action: 'stop' })
-            }).catch(err => console.error('[v0] Error enviando evento:', err));
-        }
-
-        function triggerAlarmFromRemote() {
-            if (!isAlarmActive) {
-                console.log('[v0] Alarma remota activada');
-                isAlarmActive = true;
-                document.getElementById('alarmModal').classList.add('show');
-                document.getElementById('indicator').classList.add('active');
-                playAlarmSound();
-            }
-        }
-
-        function stopAlarmFromRemote() {
-            if (isAlarmActive) {
-                console.log('[v0] Alarma remota detenida');
-                isAlarmActive = false;
-                if (oscillator) {
-                    oscillator.stop();
-                    oscillator.disconnect();
-                    oscillator = null;
-                }
-                if (alarmTimeout) {
-                    clearTimeout(alarmTimeout);
-                }
-                document.getElementById('alarmModal').classList.remove('show');
-                document.getElementById('indicator').classList.remove('active');
-            }
-        }
-
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape' && isAlarmActive) {
-                event.preventDefault();
-            }
-        });
-
-        document.getElementById('alarmModal').addEventListener('click', function(event) {
-            if (isAlarmActive && event.target === this) {
-                event.stopPropagation();
-            }
-        });
-
-        window.addEventListener('load', initPusher);
-    </script>
+  <script src="https://js.pusher.com/8/pusher.min.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
