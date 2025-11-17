@@ -1,0 +1,12 @@
+{
+  "name": "alarma-compartida",
+  "buildCommand": "echo 'Static build'",
+  "outputDirectory": "./",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
